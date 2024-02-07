@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@vimeo/vimeo": "^3.0.2",
+    "axios": "^1.6.7",
+    "dotenv": "^16.4.1",
+    "formidable": "^3.5.1",
+    "vimeo": "^2.3.1"
+  }
+}
