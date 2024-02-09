@@ -5,9 +5,4 @@ parentPort.on('message', (msg) => {
   const jsonMsg = JSON.parse(msg)
 
   const readStream = fs.createReadStream(jsonMsg.filepath)
-  const writeStream = fs.createWriteStream(jsonMsg.filepath)
-
-  readStream.on('data', async (chunk) => {
-    
-  })
 })
