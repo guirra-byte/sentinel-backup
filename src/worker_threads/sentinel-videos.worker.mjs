@@ -28,21 +28,27 @@ parentPort.on('message', async (msg) => {
       async function* r2DemandUpload() {
         const replys = []
         for (const video of videos) {
-          const uploadReply = await R2StorageProvision.uploadFile(video)
-          if (uploadReply) {
-            replys.push({
-              key: uploadReply.objectKey,
-              url: uploadReply.publicUrl
-            })
+          const videoDestination = R2StorageProvision.getPublicUrl
 
-            if(video === videosGenerator[videosGenerator.length - 1]){
-              yield replys;
+          if (videoDestination) {
+            const uploadResponse = await R2StorageProvision
+              .uploadFile(video)
+              
+            if (uploadResponse) {
+              replys.push({
+                key: uploadResponse.objectKey,
+                url: uploadResponse.publicUrl
+              })
+
+              if (video === videosGenerator[videosGenerator.length - 1]) {
+                yield replys;
+              }
             }
           }
         }
       }
 
-      for await (demandReply of r2DemandUpload){
+      for await (demandReply of r2DemandUpload) {
         parentPort.postMessage(JSON.stringify(demandReply))
       }
     }

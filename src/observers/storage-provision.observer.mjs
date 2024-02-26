@@ -6,7 +6,7 @@ import * as fs from 'node:fs'
 //Interface -> Contract to be implements;
 //The `func` argument is Subscriber Callback - (ctx_event: any) => void
 //Editor func can be offer a event context for Subscriber callback;
-//this.Subscribers -> Logbook for all events subscribers - Record<string, (ctx_event: any) => void[]>;
+//this.Subscribers -> Logbook for all events subscribers - Record<string, ((ctx_event: any) => void)[]>;
 //Use another logbook reserved for dispatched Subscribers;
 //The Provision Storage event can only occur once;
 
@@ -23,7 +23,8 @@ class subscriptionEngine {
       const claimAction = this.Subscribers[label]
         .findIndex(fn => fn === func);
 
-      if (claimAction !== -1) this.Subscribers[label].slice(claimAction, 0);
+      if (claimAction !== -1) this.Subscribers[label]
+        .slice(claimAction, 0);
     }
   }
   //Fornecer o contexto do evento para os assinantes;
@@ -73,10 +74,10 @@ async function r2StorageBookProvision(data) {
     const sentinelPrimeBucket = process.env.R2_BUCKET_NAME
     const bucket = r2Storage.bucket(sentinelPrimeBucket)
     bucket.provideBucketPublicUrl(`https://pub-${sentinelPrimeBucket}.r2.dev`)
-
+    
     if (bucket.exists()) {
       process.env.R2_STORAGE_PROVISION_STATUS = true
-      R2StorageProvision = bucket.uploadFile
+      R2StorageProvision = bucket
       SINGLE_STORAGE_PROVISION.unsubscribe(label)
     }
   }
