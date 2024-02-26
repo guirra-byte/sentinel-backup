@@ -1,8 +1,9 @@
 import * as HttpServer from 'node:http'
 import { Worker } from 'node:worker_threads'
-import { readonlyStorageProvider, bookProvidedStorage } from './observers/storage-provision.observer.mjs'
+import { r2StorageBookProvision, readonlyStorageProvider, web3StorageBookProvision } from './observers/storage-provision.observer.mjs'
 import formidable, { errors as formidableErr } from 'formidable'
 import * as dotenv from 'dotenv'
+import { workersPath } from '../path.config.mjs'
 
 dotenv.config()
 const defaultPort = 1102
@@ -16,10 +17,11 @@ HttpServer.createServer(async (request, response) => {
       const formParser = formidable({
         maxFileSize: 200 * 1024 * 1024,
         multiples: true,
+        maxFiles: 50
       })
 
       const mimetypeWaybillWorker =
-        new Worker('./worker_threads/sentinel-mimetype-waybill.worker.mjs')
+        new Worker(`${workersPath}/sentinel-mimetype-waybill.worker.mjs`)
 
       try {
         const [, files] = await formParser.parse(request)
@@ -31,7 +33,7 @@ HttpServer.createServer(async (request, response) => {
 
           mimetypeWaybillWorker
             .on('message', () => {
-              response.end()
+              
             })
         } else {
           response.end()
@@ -41,9 +43,17 @@ HttpServer.createServer(async (request, response) => {
         response.end()
       }
     }
-  } if (request.method === 'GET') { }
+  }
 }).listen(defaultPort,
   async () => {
-    readonlyStorageProvider.subscribe(bookProvidedStorage)
+    try {
+      readonlyStorageProvider.subscribe(web3StorageBookProvision)
+      process.env.WEB3_STORAGE_PROVISION_STATUS = true
+    } catch {
+      process.env.WEB3_STORAGE_PROVISION_STATUS = false
+      readonlyStorageProvider.subscribe(r2StorageBookProvision)
+      process.env.R2_STORAGE_PROVISION_STATUS = true
+    }
+
     console.log(`Server is running on port: ${defaultPort}`)
   })

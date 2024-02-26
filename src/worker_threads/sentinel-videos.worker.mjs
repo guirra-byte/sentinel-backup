@@ -1,9 +1,50 @@
 import { parentPort } from 'node:worker_threads'
 import { filesFromPaths } from 'files-from-path'
-import { GLOBAL_STORAGE_CLIENT } from './sentinel-provision-storage.worker.mjs'
+import { Web3StorageProvision } from './sentinel-provision-storage.worker.mjs'
+import { R2StorageProvision } from '../observers/storage-provision.observer.mjs'
 
 parentPort.on('message', async (msg) => {
   const jsonMsg = JSON.parse(msg)
-  const files = await filesFromPaths(jsonMsg.filePath)
-  await GLOBAL_STORAGE_CLIENT.uploadDirectory(files)
+
+  async function* videosGenerator() {
+    let videos = []
+    const padsLength = Number(process.env.AGGREGATED_VIDEOSS)
+    for (let pad = 0; pad < jsonMsg.length; pad++) {
+      videos.push(jsonMsg[pad].filePath)
+      if (videos.length === (padsLength - 1)) {
+        yield videos;
+        videos = []
+      }
+    }
+  }
+
+  for await (const videos of videosGenerator) {
+    const filesLike = await filesFromPaths(videos)
+
+    if (process.env.WEB3_STORAGE_PROVISION_STATUS &&
+      !process.env.R2_STORAGE_PROVISION_STATUS) {
+      await Web3StorageProvision.uploadDirectory(filesLike)
+    } else {
+      async function* r2DemandUpload() {
+        const replys = []
+        for (const video of videos) {
+          const uploadReply = await R2StorageProvision.uploadFile(video)
+          if (uploadReply) {
+            replys.push({
+              key: uploadReply.objectKey,
+              url: uploadReply.publicUrl
+            })
+
+            if(video === videosGenerator[videosGenerator.length - 1]){
+              yield replys;
+            }
+          }
+        }
+      }
+
+      for await (demandReply of r2DemandUpload){
+        parentPort.postMessage(JSON.stringify(demandReply))
+      }
+    }
+  }
 })

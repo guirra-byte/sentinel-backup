@@ -6,7 +6,9 @@
     "@web3-storage/w3up-client": "^12.4.1",
     "axios": "^1.6.7",
     "files-from-path": "^1.0.4",
-    "formidable": "^3.5.1"
+    "formidable": "^3.5.1",
+    "node-cloudflare-r2": "^0.1.5",
+    "yauzl-promise": "^4.0.0"
   },
   "devDependencies": {
     "dotenv": "^16.4.1"

@@ -1,5 +1,6 @@
 import { readonlyStorageProvider } from '../observers/storage-provision.observer.mjs'
 import { create } from '@web3-storage/w3up-client'
+import { storageBookProvisionPath } from '../../path.config.mjs'
 
 //Configurar a recuperação para acesso em outros dispositivos;
 async function storageRecovery(storage_space, owner_account, client) {
@@ -11,12 +12,20 @@ async function storageRecovery(storage_space, owner_account, client) {
     })
 }
 
+async function anotherStorageProvision() {
+  readonlyStorageProvider.notify('storage_provision', {
+    data: {
+      notifiedAt: new Date().toISOString(),
+    }
+  })
+}
+
 //Criação de um espaço e seu Provisionamento precisa acontecer uma vez;
-let GLOBAL_STORAGE_CLIENT;
+let Web3StorageProvision;
 async function storageProvision() {
   await create()
     .then(async (_client) => {
-      GLOBAL_STORAGE_CLIENT = _client
+      Web3StorageProvision = _client
       const provisionSpace = await _client.createSpace()
 
       if (provisionSpace) {
@@ -34,11 +43,12 @@ async function storageProvision() {
                     await readonlyStorageProvider.notify('storage_provision', {
                       data: {
                         notifiedAt: new Date().toISOString(),
-                        book_path: path.resolve('./provision_report/book.provision.json')
+                        book_path: storageBookProvisionPath
+                          .concat('/web3-storage-provision.json')
                       }
                     })
-                  } catch (error) {
-                    throw error
+                  } catch {
+                    await anotherStorageProvision()
                   }
 
                   break;
@@ -52,7 +62,9 @@ async function storageProvision() {
 
       }
     })
-    .catch((err_reason) => { throw new Error(err_reason) })
+    .catch(async () => {
+      await anotherStorageProvision()
+    })
 }
 
-export { storageProvision, GLOBAL_STORAGE_CLIENT }
+export { storageProvision, Web3StorageProvision }

@@ -6,7 +6,7 @@ parentPort.on('messageerror',
   })
 
 parentPort.on('message', (aggregated_files) => {
-  const backupAssets = new Worker('.sentinel-videos.worker.mjs')
+  const backupAssets = new Worker('./sentinel-videos.worker.mjs')
   const backupVideos = new Worker('./sentinel-assets.worker.mjs')
 
   let incommingData = {}
