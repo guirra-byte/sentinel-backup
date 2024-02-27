@@ -8,6 +8,7 @@
     "files-from-path": "^1.0.4",
     "formidable": "^3.5.1",
     "node-cloudflare-r2": "^0.1.5",
+    "worker-threads-pool": "^2.0.0",
     "yauzl-promise": "^4.0.0"
   },
   "devDependencies": {
